@@ -65,7 +65,7 @@ class PttModel {
     }
 
     try {
-      //刪除所有表
+      //刪除表
       await pgdb(PTT_HOTBOARD_TABLE_STRING).delete()
 
       const promises = hotboards.map(hotboard => {

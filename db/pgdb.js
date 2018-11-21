@@ -30,7 +30,7 @@ const {
 } = require('../constants/tableSchema')
 
 
-console.log('扯')
+
 
 const knex = require('knex')
 const pgdb = knex({
