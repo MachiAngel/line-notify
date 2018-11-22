@@ -1,6 +1,7 @@
 
 
 const {
+  USERS_TABLE_STRING,
   PTT_HOTBOARD_TABLE_STRING,
   //爬蟲table 
   EYNY_BT_MOVIE_TABLE_STRING,
@@ -17,6 +18,7 @@ const {
 } = require('../constants/tableSchema')
 
 const {
+  USERS_TABLE_SCHEMA,
   EYNY_VIDEO_TABLE_SCHEMA,
   EYNY_MOVIE_TABLE_SCHEMA,
   EYNY_BT_MOVIE_TABLE_SCHEMA,
@@ -70,6 +72,10 @@ const createTableIfNotExist = async (tableName,tableSchema) => {
 
 const run = async () => {
 
+
+  //使用者表
+  await createTableIfNotExist(USERS_TABLE_STRING, USERS_TABLE_SCHEMA)
+
   //爬蟲依例電影表
   await createTableIfNotExist(EYNY_MOVIE_TABLE_STRING, EYNY_MOVIE_TABLE_SCHEMA)
   //爬蟲依例BT電影表
@@ -102,7 +108,7 @@ run().then(result => {
 // pgdb.schema.createTable('eyny_movie_qq', (table) => {
 //   table.increments()
   
-//   table.string('title')
+//   table.string('title').defaultTo('')
 //   table.string('author', 50).notNullable()
 //   table.string('views')
 //   table.integer()

@@ -1,5 +1,5 @@
 
-
+const USERS_TABLE_STRING = 'users'
 const EYNY_BT_MOVIE_TABLE_STRING = 'eyny_movie_bt_articles'
 const EYNY_MOVIE_TABLE_STRING = 'eyny_movie_articles'
 const EYNY_VIDEO_TABLE_STRING = 'eyny_video_articles'
@@ -22,6 +22,18 @@ const USER_PUSHED_TABLE_SCHEMA = (table) => {
   table.string('user_line_id', 100)
   table.string('article_url')
   table.string('sub_type', 100)
+  table.timestamps(true, true)
+}
+
+const USERS_TABLE_SCHEMA = (table) => {
+  table.increments()
+  table.string('line_userId', 200)
+  table.string('jwt_token')
+  table.string('line_displayName', 200)
+  table.string('line_pictureUrl')
+  table.string('line_statusMessage')
+  table.string('status').defaultTo('1')
+  table.string('vip').defaultTo('0')
   table.timestamps(true, true)
 }
 
@@ -186,7 +198,7 @@ const SUBSCRIBE_EYNY_VIDEO_TABLE_SCHEMA = (table) => {
 
 module.exports = {
 
-
+  USERS_TABLE_STRING,
   //ptt hot board table 
   PTT_HOTBOARD_TABLE_STRING,
   //爬蟲table 
@@ -215,7 +227,8 @@ module.exports = {
   SUBSCRIBE_EYNY_VIDEO_TABLE_SCHEMA,
   SUBSCRIBE_PTT_TABLE_SCHEMA,
   USER_PUSHED_TABLE_SCHEMA,
-  PTT_HOTBOARD_TABLE_SCHEMA
+  PTT_HOTBOARD_TABLE_SCHEMA,
+  USERS_TABLE_SCHEMA
 }
 
 
