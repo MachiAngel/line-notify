@@ -11,7 +11,7 @@ const messageObject = {
   "text": "Hello, world"
 }
 
-console.log(bot)
+
 
 bot.push(userId, messageObject)
   .then(result => {

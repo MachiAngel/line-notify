@@ -3,7 +3,9 @@ const Router = express.Router()
 const subController = require('../controller/subscribeController.js')
 
 
-Router.post('/subscriptions', (req, res) => { subController.getAllSubscriptions(req, res) })
-Router.get('/subscriptions/:id', (req, res) => { subController.getAllSubscriptions(req, res) })
+Router.post('/subscriptions/ptt', async (req, res) => { subController.handleAddPttSub(req, res) })
+Router.delete('/subscriptions/ptt', async (req, res) => { subController.handleDeletePttSub(req, res) })
+
+Router.get('/subscriptions/:user_line_id', async (req, res) => { subController.handleGetAllSubs(req, res) })
 
 module.exports = Router

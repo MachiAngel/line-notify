@@ -31,20 +31,11 @@ const {
   PTT_HOTBOARD_TABLE_SCHEMA
 } = require('../constants/tableSchema')
 
-
-
+const environment = process.env.NODE_ENV || 'development'
+const config = require('../knexfile.js')[environment];
 
 const knex = require('knex')
-const pgdb = knex({
-    client: 'pg',
-    connection: {
-      host: '127.0.0.1',
-        user : '',
-        password : '',
-        database : 'smart-brain',
-        ssl: false
-    }
-})
+const pgdb = knex(config)
 
 
 
@@ -99,11 +90,11 @@ const run = async () => {
   return 'create table process done'
 }
 
-run().then(result => {
-  console.log(result)
-}).catch(e => {
-  console.log(e.message)
-})
+// run().then(result => {
+//   console.log(result)
+// }).catch(e => {
+//   console.log(e.message)
+// })
 
 // pgdb.schema.createTable('eyny_movie_qq', (table) => {
 //   table.increments()

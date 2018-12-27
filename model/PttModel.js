@@ -1,24 +1,59 @@
 
-const { PTT_TABLE_STRING, PTT_HOTBOARD_TABLE_STRING } = require('../constants/tableSchema')
+const { PTT_TABLE_STRING, SUBSCRIBE_PTT_TABLE_STRING , PTT_HOTBOARD_TABLE_STRING } = require('../constants/tableSchema')
+
 
 
 class PttModel {
 
+  constructor({ db }) {
+    this.db = db
+  }
 
-  /** @description Get Eyny articles from pgdb
-  * @param {object} Ptt article
-  * @param {object} Knex
-  * @return {array} return eyny movie articles
-  */
-  async savePttArticleToPGDB(article, pgdb) {
+  //拿到所有爬蟲的存入的資料
+  async getAllArticles(){
+    try {
+      const articles = await this.db
+        .select('*')
+        .from(PTT_TABLE_STRING)
+      
+      return articles
+
+    } catch (error) {
+      console.log(error.message)
+      throw error
+    }
+  }
+
+  //拿到所有定用的版 給爬蟲用
+  async getAllUserSubBoard() {
+    try {
+      const result = await this.db(SUBSCRIBE_PTT_TABLE_STRING)
+        .select('board')
+        .groupBy('board')
+
+      // [{ board: 'codejob' },
+      // { board: 'movie' },
+      //   { board: 'gossiping' }]
+
+      const boards = result.map(row => {
+        return row.board
+      })
+      return boards
+
+    } catch (error) {
+      console.log(error.message)
+      throw error
+    }
+  }
+  async savePttArticleToPGDB(article) {
 
     const { title, category, article_source, article_url, article_date, author, rate, board } = article
 
     try {
-      const isHavingArticle = await pgdb(PTT_TABLE_STRING).where('article_url', '=', article.article_url).returning('*')
+      const isHavingArticle = await this.db(PTT_TABLE_STRING).where('article_url', '=', article.article_url).returning('*')
       if (isHavingArticle.length) {
         //更新
-        const updateResult = await pgdb(PTT_TABLE_STRING)
+        const updateResult = await this.db(PTT_TABLE_STRING)
           .update({ rate, updated_at: new Date() })
           .where('article_url', '=', isHavingArticle[0].article_url)
           .returning('*')
@@ -30,7 +65,7 @@ class PttModel {
         return `title:${updateResult[0].title} 更新成功 `
       } else {
         //insert
-        const insertResults = await pgdb.insert({
+        const insertResults = await this.db.insert({
           title,
           author,
           category,
@@ -58,19 +93,20 @@ class PttModel {
   * @param {object} Knex
   * @return {boolen} return true or false 
   */
-  async savePttHotBoardsToPGDB(hotboards=[], pgdb) {
+  async savePttHotBoardsToPGDB(hotboards=[]) {
 
     if (!hotboards.length) {
+      console.log('no hotbaords data')
       return 'no hotboards data'
     }
 
     try {
       //刪除表
-      await pgdb(PTT_HOTBOARD_TABLE_STRING).delete()
+      await this.db(PTT_HOTBOARD_TABLE_STRING).delete()
 
       const promises = hotboards.map(hotboard => {
         // const { board_en_name, board_tw_name, current_user_count, board_category, board_desc } = hotboard
-        const promise = pgdb.insert(hotboard)
+        const promise = this.db.insert(hotboard)
           .into(PTT_HOTBOARD_TABLE_STRING)
           .returning('*')
         return promise
@@ -88,5 +124,7 @@ class PttModel {
   
 }
 
+module.exports = PttModel
 
-module.exports = new PttModel()
+
+

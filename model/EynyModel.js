@@ -6,16 +6,21 @@ const {EYNY_MOVIE_TABLE_STRING,
 } = require('../constants/tableSchema')
 
 
-class EynyModel {
+module.exports = class EynyModel {
+
+
+  constructor({ db }) {
+    this.db = db
+  }
 
   /** @description Get Eyny articles from pgdb
   * @param {object} Knex
   * @return {array} return eyny movie articles
   */
-  async getEynyArticlesFrom(tableName,pgdb) {
+  async getEynyArticlesFrom(tableName) {
     try {
 
-      const articles = await pgdb(tableName).returning('*')
+      const articles = await this.db(tableName).returning('*')
       return articles
     } catch (e) {
       
@@ -29,14 +34,14 @@ class EynyModel {
   * @param {object} Article
   * @param {object} Knex
   */
-  async saveEynyMovieArticleToPGDB(article, pgdb) {
+  async saveEynyMovieArticleToPGDB(article) {
     const { title, author, views, pre_image_url, article_time, article_url, article_source, movie_source, movie_category } = article
 
     try {
-      const isHavingArticle = await pgdb(EYNY_MOVIE_TABLE_STRING).where('article_url', '=', article.article_url).returning('*')
+      const isHavingArticle = await this.db(EYNY_MOVIE_TABLE_STRING).where('article_url', '=', article.article_url).returning('*')
       if (isHavingArticle.length) {
         //更新
-        const updateResult = await pgdb(EYNY_MOVIE_TABLE_STRING)
+        const updateResult = await this.db(EYNY_MOVIE_TABLE_STRING)
           .update({ views, updated_at: new Date() })
           .where('article_url', '=', isHavingArticle[0].article_url)
           .returning('*')
@@ -48,7 +53,7 @@ class EynyModel {
         return `title:${updateResult[0].title} 更新成功 `
       } else {
         //insert
-        const insertResults = await pgdb.insert({
+        const insertResults = await this.db.insert({
           title,
           author,
           views,
@@ -75,14 +80,14 @@ class EynyModel {
   * @param {object} Article
   * @param {object} Knex
   */
-  async saveEynyBTMovieArticleToPGDB(article, pgdb) {
+  async saveEynyBTMovieArticleToPGDB(article) {
     const { title, author, views, article_time, article_url, pre_image_url, article_source, movie_quality } = article
 
     try {
-      const isHavingArticle = await pgdb(EYNY_BT_MOVIE_TABLE_STRING).where('article_url', '=', article.article_url).returning('*')
+      const isHavingArticle = await this.db(EYNY_BT_MOVIE_TABLE_STRING).where('article_url', '=', article.article_url).returning('*')
       if (isHavingArticle.length) {
         //更新
-        const updateResult = await pgdb(EYNY_BT_MOVIE_TABLE_STRING)
+        const updateResult = await this.db(EYNY_BT_MOVIE_TABLE_STRING)
           .update({ views, updated_at: new Date() })
           .where('article_url', '=', isHavingArticle[0].article_url)
           .returning('*')
@@ -94,7 +99,7 @@ class EynyModel {
         return `title:${updateResult[0].title} 更新成功 `
       } else {
         //insert
-        const insertResults = await pgdb.insert({
+        const insertResults = await this.db.insert({
           title,
           author,
           views,
@@ -120,11 +125,11 @@ class EynyModel {
   * @param {object} Article
   * @param {object} Knex
   */
-  async saveEynyVideoArticleToPGDB(article, pgdb) {
+  async saveEynyVideoArticleToPGDB(article) {
     const { title, author, views, article_time, article_url, article_source, membership, movie_quality, keyword } = article
     
     try {
-      const isHavingArticle = await pgdb(EYNY_VIDEO_TABLE_STRING)
+      const isHavingArticle = await this.db(EYNY_VIDEO_TABLE_STRING)
         .where({
           article_url: article.article_url,
           keyword
@@ -133,7 +138,7 @@ class EynyModel {
       
       if (isHavingArticle.length ) {
         //更新
-        const updateResult = await pgdb(EYNY_VIDEO_TABLE_STRING)
+        const updateResult = await this.db(EYNY_VIDEO_TABLE_STRING)
           .update({ views, article_time, updated_at: new Date() })
           .where('article_url', '=', isHavingArticle[0].article_url)
           .returning('*')
@@ -145,7 +150,7 @@ class EynyModel {
         return `title:${updateResult[0].title} 更新成功 `
       } else {
         
-        const insertResults = await pgdb.insert({
+        const insertResults = await this.db.insert({
           title,
           author,
           views,
@@ -170,4 +175,4 @@ class EynyModel {
 }
 
 
-module.exports = new EynyModel()
+

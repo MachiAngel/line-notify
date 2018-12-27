@@ -65,3 +65,30 @@ const user = {
     content: [Function]
   }
 }
+
+
+
+
+const response = {
+  "access_token": "eyJhbGciOiJIUzI1NiJ9.gFjSSb_2V19fifrzSuC-luEabk_7SUqAVU088W4j9aQozdxgE9sffrZYbVMf2WmA7jy5zYgTLxEGKJVQ-HuJdrIDCJkzFZxCqmt3DVoclLRrC7-WvLNOAgrnv2mlO9hqIIFLiryAxPYoKVjkv-kU78Abpwi0CfNTN3CL0quEn18.FUJ-8TR5RB5XzjOZN7acyt01jTXaqabWt_8ut33kbX4",
+  "token_type": "Bearer",
+  "refresh_token": "N0NNLdfWM8gdD4kDQZdx",
+  "expires_in": 2592000,
+  "scope": "openid profile",
+  "id_token": {
+    "iss": "https://access.line.me",
+    "sub": "U20c2fb6275968599930d9c307b5fe9d6",
+    "aud": "1623156035",
+    "exp": 1543344745,
+    "iat": 1543341145,
+    "nonce": "2b9fb4daa6674e212c29c5471249bed49f67bb85",
+    "name": "～翔～",
+    "picture": "https://profile.line-scdn.net/0m016def057251bd31e18e395823b6352f7acc371bfc08"
+  }
+}
+
+
+//callback 
+
+
+// https://77a98247.ngrok.io/callback?friendship_status_changed=false&code=goTth8qParAencWRK8Fi&state=23dd7a3673de4169286577d83069f9a520b2c658

@@ -1,29 +1,41 @@
 require('dotenv').config()
 
 const express = require('express');
+const session = require("express-session");
+const line_login = require("line-login");
 const bodyParser = require('body-parser');
 const path = require('path');
 
 const bot = require('./bots/linebot')
-const CrawlerScript = require('./scripts/CrawlerScript')
-const Notify = require('./scripts/NotifyScript')
+
 
 const subscribeRouter = require('./routers/subscribeRouter.js')
 
-const port = process.env.PORT || 3050
+const port = process.env.PORT || 30001
 const app = express();
 
+const session_options = {
+  secret: process.env.LINE_LOGIN_CHANNEL_SECRET,
+  resave: false,
+  saveUninitialized: false
+}
 
-//constant 
-// const constant = require('./constants/constants')
-// const table = require('./constants/tableSchema')
+const login = new line_login({
+  channel_id: process.env.LINE_LOGIN_CHANNEL_ID,
+  channel_secret: process.env.LINE_LOGIN_CHANNEL_SECRET,
+  callback_url: process.env.LINE_LOGIN_CALLBACK_URL,
+  scope: "openid profile",
+  prompt: "consent",
+  bot_prompt: "aggressive"
+});
 
-//db 
-const pgdb = require('./db/pgdb.js')
 
-//script
-const crawlerScript = new CrawlerScript(pgdb)
-const notify = new Notify(pgdb)
+// //db 
+// const pgdb = require('./db/pgdb.js')
+
+// //script
+// const crawlerScript = new CrawlerScript()
+// const notify = new Notify(pgdb)
 
 
 //驗證
@@ -33,6 +45,10 @@ const parser = bodyParser.json({
   }
 });
 
+app.use(session(session_options));
+
+
+//line bot
 app.post('/linewebhook', parser, function (req, res) {
   if (!bot.verify(req.rawBody, req.get('X-Line-Signature'))) {
     return res.sendStatus(400);
@@ -42,41 +58,35 @@ app.post('/linewebhook', parser, function (req, res) {
 });
 
 
+//line login
+app.use("/auth", login.auth())
+
+app.use("/callback", login.callback(
+  (req, res, next, token_response) => {
+    // Success callback
+    console.log('token_response')
+    console.log(token_response)
+    //應該要回傳登入的react page
+    res.json(token_response);
+    
+  },
+  (req, res, next, error) => {
+    // Failure callback
+    res.status(400).json(error);
+  }
+));
+
+
+
 
 app.use(bodyParser.json());
-
 app.use('/api/v1', subscribeRouter)
 
 
 
 
 
-// // Serve the static files from the React app
-// app.use(express.static(path.join(__dirname, 'client/build')));
-
-// // An api endpoint that returns a short list of items
-// app.get('/api/getList', (req, res) => {
-//   var list = ["item1", "item2", "item3"];
-//   res.json(list);
-//   console.log('Sent list of items');
-// });
-
-// // Handles any requests that don't match the ones above
-// app.get('*', (req, res) => {
-//   res.sendFile(path.join(__dirname + '/client/build/index.html'));
-// });
-
-
-
-
-// crawlerScript.startPttHotBoardCrawler()
-// crawlerScript.startPttCrawler()
-// crawlerScript.startEynyCrawler()
-
-// crawlerScript.start()
-// notify.start()
-
-
 app.listen(port, function () {
   console.log(`LineBot is running at ${port} ...`);
+  console.log(`process.env.NODE_ENV is ${process.env.NODE_ENV}`)
 });

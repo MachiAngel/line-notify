@@ -109,6 +109,7 @@ const EYNY_BT_MOVIE_TABLE_SCHEMA = (table) => {
 
 //PTT
 
+
 const SUBSCRIBE_PTT_TABLE_SCHEMA = (table) => {
   table.increments()
   table.string('user_line_id', 100)

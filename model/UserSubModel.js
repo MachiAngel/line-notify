@@ -2,22 +2,44 @@
 const { 
   USER_PUSHED_TABLE_STRING,
   SUBSCRIBE_PTT_TABLE_STRING,
-  SUBSCRIBE_EYNY_VIDEO_TABLE_STRING
+  SUBSCRIBE_EYNY_VIDEO_TABLE_STRING,
+  SUBSCRIBE_EYNY_BT_MOVIE_TABLE_STRING,
+  SUBSCRIBE_EYNY_MOVIE_TABLE_STRING
 } = require('../constants/tableSchema')
 
 
+
+
+// user_line_id
+// sub_type
+// title
+// not_title
+// board
+// author
+// category
+// rate
+
 class UserSubModel {
 
-  /** @description Save pushed article to pgdb
-  * @param {String} table name  
-  * @param {object} pgdb
-  * @return {array} return all data from table u given
-  */
-  async getAllUserSubscriptionsByTable(tableName, pgdb) {
-    try {
+  constructor({ db }) {
+    this.db = db
+  }
 
-      const subs = await pgdb(tableName).returning('*')
-      return subs
+  /** @description Get all user subscriotions
+  * @param {String} user_line_id  
+  * @param {object} pgdb
+  * @return { object } return all data from table u given
+  */
+  
+  async getAllUserSubscriptions(user_line_id) {
+    
+    try {
+      const pttSubs = await this.db(SUBSCRIBE_PTT_TABLE_STRING).where({ user_line_id}).returning('*')
+      const eynyVideoSubs = await this.db(SUBSCRIBE_EYNY_VIDEO_TABLE_STRING).where({ user_line_id }).returning('*')
+      const eynyBTMovieSubs = await this.db(SUBSCRIBE_EYNY_BT_MOVIE_TABLE_STRING).where({ user_line_id }).returning('*')
+      const eynyMovieSubs = await this.db(SUBSCRIBE_EYNY_MOVIE_TABLE_STRING).where({ user_line_id }).returning('*')
+
+      return { pttSubs, eynyVideoSubs, eynyBTMovieSubs, eynyMovieSubs}
 
     } catch (e) {
       console.log(e.message)
@@ -25,17 +47,30 @@ class UserSubModel {
     }
   }
 
+  
+  async getSubsByTable(tableName) {
+    try {
+      const tableSubs = await this.db.select('*').from(tableName)
+      
+      return tableSubs
+
+    } catch (e) {
+      console.log(e.message)
+      throw e
+    }
+    
+  }
+  
 
   /** @description Save pushed article to pgdb
   * @param {String} user_line_id.
   * @param {String} article_url   
-  * @param {object} Knex 
   */
-  async savePushedArticleUrlToPGDB(user_line_id, article, pgdb) {
+  async savePushedArticleUrlToPGDB(user_line_id, article) {
     const { article_url, article_source } = article
     try {
 
-      const insertResult = await pgdb.insert({
+      const insertResult = await this.db.insert({
         user_line_id,
         article_url,
         sub_type: article_source
@@ -59,17 +94,16 @@ class UserSubModel {
   /** @description Determines articles is pushed or not.
   * @param {String} user_line_id.
   * @param {String} article_url   
-  * @param {object} Knex
-  * @return {Boolean} 回传 true or false 
+  * @return {Boolean} return true or false 
   */
-  async isSubscriptionPushed(user_line_id, article_url, pgdb) {
+  async isSubscriptionPushed(user_line_id, article_url) {
     try {
 
       const query = {
         user_line_id,
         article_url
       }
-      const subs = await pgdb(USER_PUSHED_TABLE_STRING)
+      const subs = await this.db(USER_PUSHED_TABLE_STRING)
         .where(query)
         .select('id')
 
@@ -86,7 +120,7 @@ class UserSubModel {
   */
   async getSubscriptionBoardsFromPtt(pgdb) {
     try {
-      const boards = await pgdb
+      const boards = await this.db
         .select('board')
         .from(SUBSCRIBE_PTT_TABLE_STRING)
         .groupBy('board')
@@ -108,7 +142,7 @@ class UserSubModel {
   */
   async getSubscriptionsOfKeywordFromEynyVideo(pgdb) {
     try {
-      const keywords = await pgdb
+      const keywords = await this.db
         .select('keyword')
         .from(SUBSCRIBE_EYNY_VIDEO_TABLE_STRING)
         .groupBy('keyword')
@@ -132,4 +166,4 @@ class UserSubModel {
 }
 
 
-module.exports = new UserSubModel()
+module.exports = UserSubModel

@@ -6,7 +6,6 @@ const PTT_SOURCE_HOTBOARD = 'ptt_hotboard'
 
 
 
-
 const EYNY_MOVIE_TYPE_ARRAY = [
   '所有', '愛情', '喜劇', '科幻', '動作', '戰爭災難', '懸疑推理'
   , '血腥獵奇', '恐怖驚悚', '奇幻冒險', '劇情', '動畫', 'DLC', '其他']

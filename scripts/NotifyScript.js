@@ -1,7 +1,7 @@
 
 const schedule = require('node-schedule')
 const _ = require('lodash') 
-
+const pgdb = require('../db/pgdb')
 
 const {
   EYNY_SOURCE_VIDEO,
@@ -12,7 +12,8 @@ const {
 
 const { SUBSCRIBE_EYNY_MOVIE_TABLE_STRING,
   SUBSCRIBE_EYNY_VIDEO_TABLE_STRING,
-  SUBSCRIBE_EYNY_BT_MOVIE_TABLE_STRING
+  SUBSCRIBE_EYNY_BT_MOVIE_TABLE_STRING,
+  SUBSCRIBE_PTT_TABLE_STRING
 } = require('../constants/tableSchema')
 
 const {
@@ -24,31 +25,47 @@ const {
 
 const eynyModel = require('../model/EynyModel')
 const pushModel = require('../model/PushModel')
-const userSubModel = require('../model/UserSubModel')
 
-// const pgdb = require('../db/pgdb')
+const UserSubModel = require('../model/UserSubModel')
+const userSubModel = new UserSubModel({ db:pgdb })
+
+const PttModel = require('../model/PttModel')
+const pttModel = new PttModel({ db: pgdb })
 
 
 
 module.exports = class Notify  {
 
-  constructor(pgdb) {
+  constructor() {
     this.intervalTime = '*/30 * * * * *'
     this.notifyJob_eyny_movie = undefined 
     this.notifyJob_eyny_bt_movie = undefined
     this.notifyJob_eyny_video = undefined
-    this.pgdb = pgdb 
-
+    this.notifyJob_ptt = undefined
   }
 
 
   start() {
+
+    this.notifyJob_ptt = schedule.scheduleJob(this.intervalTime, async () => {
+      //爬到的資料送出
+      
+      try {
+        const startTime = Date.now()  
+        await doAllPttNotify()
+        const endTime = Date.now()
+        console.log(`ptt notify 耗時: ${(endTime - startTime) / 1000} s`)
+      } catch (e) {
+        console.log(e.message)
+      }
+    })
+
     this.notifyJob_eyny_movie = schedule.scheduleJob(this.intervalTime, async () => {
       //爬到的資料送出
       try {
-        console.time('eyny movie notify start')
-        await doAllEynyMovieNotify()
-        console.timeEnd('eyny movie notify end')
+        
+        // await doAllEynyMovieNotify()
+        
       } catch (e) {
         console.log(e.message)
       }
@@ -57,9 +74,9 @@ module.exports = class Notify  {
     this.notifyJob_eyny_bt_movie = schedule.scheduleJob(this.intervalTime, async () => {
       //爬到的資料送出
       try {
-        console.time('eyny bt movie notify')
-        await doAllEynyBtMovieNotify()
-        console.timeEnd('eyny bt movie notify')
+        
+        // await doAllEynyBtMovieNotify()
+        
       } catch (e) {
         console.log(e.message)
       }
@@ -69,14 +86,43 @@ module.exports = class Notify  {
 
 }
 
+const doAllPttNotify = async () => {
+
+  try {
+    //拿出PTT所有的訂閱
+    const userPttSubs = await userSubModel.getSubsByTable(SUBSCRIBE_PTT_TABLE_STRING)
+
+    //拿出爬到的Ptt所有文章
+    const pttArticles = await pttModel.getAllArticles()
+
+    const promises = []
+    for (let subscription of userPttSubs) {
+
+      const filteredArticles = getPttEligibleArticles(subscription, pttArticles)
+     
+      for (let article of filteredArticles) {
+        const promise = handlePttNotifyPromise(subscription, article)
+        promises.push(promise)
+      }
+    }
+    console.log(`ptt promise長度 :${promises.length}`)
+    await Promise.all(promises)
+  } catch (e) {
+    console.log(e)
+    throw e 
+  }
+
+  
+}
+
 
 const doAllEynyMovieNotify = async () => {
   try {
     //拿出一種類型的訂閱
-    const userEynyMovieSubs = await userSubModel.getUserSubscriptionsByTable(SUBSCRIBE_EYNY_MOVIE_TABLE_STRING, this.pgdb)
+    const userEynyMovieSubs = await userSubModel.getUserSubscriptionsByTable(SUBSCRIBE_EYNY_MOVIE_TABLE_STRING)
     
     //拿出該類型爬到的資料
-    const eynyMovies = await eynyModel.getEynyArticlesFrom(EYNY_MOVIE_TABLE_STRING, this.pgdb)
+    const eynyMovies = await eynyModel.getEynyArticlesFrom(EYNY_MOVIE_TABLE_STRING)
     // console.log(eynyMovies)
 
     const promises = []  
@@ -99,7 +145,7 @@ const doAllEynyMovieNotify = async () => {
 const doAllEynyBtMovieNotify = async () => {
   try {
     //拿出BT類型的訂閱
-    const userEynyMovieSubs = await userSubModel.getAllUserSubscriptionsByTable(SUBSCRIBE_EYNY_BT_MOVIE_TABLE_STRING, this.pgdb)
+    const userEynyMovieSubs = await userSubModel.getAllUserSubscriptionsByTable(SUBSCRIBE_EYNY_BT_MOVIE_TABLE_STRING)
 
     //拿出該類型爬到的資料
     const eynyMovies = await eynyModel.getEynyArticlesFrom(EYNY_BT_MOVIE_TABLE_STRING, this.pgdb)
@@ -123,6 +169,28 @@ const doAllEynyBtMovieNotify = async () => {
     console.log(e.message)
   }
 
+}
+
+
+const handlePttNotifyPromise = async (subscription, article) => {
+  const { sub_type } = subscription
+  try {
+
+    //檢查是否該推
+    const shouldPush = await generateShouldPushFunction(sub_type)(subscription, article)
+    if (!shouldPush) { return `${article.title} shouldn't push to${subscription.user_line_id}` }
+
+    const line_pushed_result = await pushModel.push(subscription, article)
+    //成功line會回傳空物件
+    const isResultEmpty = _.isEmpty(line_pushed_result)
+    if (!isResultEmpty) { return JSON.stringify(pushedResult) }
+
+    await userSubModel.savePushedArticleUrlToPGDB(subscription.user_line_id, article)
+    return `${article.title} push to ${subscription.user_line_id} success`
+
+  } catch (e) {
+    return e.message
+  }
 }
 
 
@@ -164,11 +232,53 @@ const generateShouldPushFunction = (sub_type) => {
     case EYNY_SOURCE_MOIVE_BT:
       return isEynyBTMovieArticleShouldPush
     case PTT_SOURCE:
-      return ''
+      return isPttArticleShouldPush
     default:
       return ''
   }
 }
+
+
+const getPttEligibleArticles = (sub, articles) => {
+  const { title: subTitle, board: subBoard, category: subCategory, rate: subRate, author: subAuthor } = sub
+  const eligibleArticles = articles.filter(article => {
+
+    const { title, board, author, category, rate } = article
+    //版名符合 
+    const boardMatch = board.toLowerCase() === subBoard.toLowerCase() ? true : false
+    //要沒有subscription title 就算符合 直接是 true , 有title 就跟訂閱檢查
+    const titleMatch = subTitle ? title.includes(subTitle) : true
+    //副標題要一樣才推
+    const categoryMatch = subCategory ? category === subCategory : true
+    //作者一樣才推
+    const authorMatch = subAuthor ? author === subAuthor : true
+    //只有文章推文數比 條件大才推
+    const rateMatch = rate >= subRate
+    return boardMatch && titleMatch && categoryMatch && authorMatch && rateMatch
+  })
+
+  return eligibleArticles
+  
+}
+
+//檢查是否應該推此PTT文章
+const isPttArticleShouldPush = async (sub, article) => {
+
+  //一定要有 
+  const { article_url } = article
+  const { user_line_id } = sub
+  
+  try {
+    const havePushed = await userSubModel.isSubscriptionPushed(user_line_id, article_url)
+    return havePushed ? false : true
+
+  } catch (e) {
+    console.log(e.message)
+    throw e 
+  }
+
+}
+
 
 
 const isEynyMovieArticleShouldPush = async (sub,article) => {
