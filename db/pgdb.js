@@ -35,7 +35,11 @@ const environment = process.env.NODE_ENV || 'development'
 const config = require('../knexfile.js')[environment];
 
 const knex = require('knex')
-const pgdb = knex(config)
+
+let db;
+if (!db) {
+  db = knex(config)
+}
 
 
 
@@ -97,7 +101,7 @@ const run = async () => {
 // })
 
 
-module.exports = pgdb
+module.exports = db
 
 
 // pgdb.migrate.latest(config)

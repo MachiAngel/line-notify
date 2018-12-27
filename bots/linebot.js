@@ -6,8 +6,7 @@ const Handler = require('./handlers/handler.js')
 
 const isProd = process.env.NODE_ENV === 'production'
 console.log(`line bot token check -> isProd ${isProd}`)
-console.log(`line bot token check -> isProd ${isProd}`)
-console.log(`line bot token check -> isProd ${isProd}`)
+
 
 const bot = createbot({
   channelId: isProd ? process.env.LINE_CHANNELID : process.env.LINE_CHANNELID_DEV,
