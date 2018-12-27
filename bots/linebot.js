@@ -2,10 +2,14 @@
 const createbot = require('linebot')
 const { askTemplate } = require('./template/askTemplate.js')
 const Handler = require('./handlers/handler.js')
+
+
+const isProd = process.env.NODE_ENV === 'production'
+
 const bot = createbot({
-  channelId: process.env.LINE_CHANNELID,
-  channelSecret: process.env.LINE_SECRET,
-  channelAccessToken: process.env.LINE_TOKEN
+  channelId: isProd ? process.env.LINE_CHANNELID : process.env.LINE_CHANNELID_DEV,
+  channelSecret: isProd ? process.env.LINE_SECRET : process.env.LINE_SECRET_DEV,
+  channelAccessToken: isProd ? process.env.LINE_TOKEN : process.env.LINE_TOKEN_DEV 
 });
 
 
@@ -16,11 +20,14 @@ bot.on('message', async (event) => {
   const { userId, type } = event.source
   if (type !== 'user') {return}
 
-  await logHelper(event)
+  if (!isProd) {
+    await logHelper(event)
+  }
+  
 
   try {
-    const result = await event.reply(askTemplate)  
-    console.log(`reply result success:${JSON.stringify(result)}`)
+    const result = await event.reply(event.message.text)  
+    //console.log(`reply result success:${JSON.stringify(result)}`)
   } catch (e) {
     console.log(e.message);
   }

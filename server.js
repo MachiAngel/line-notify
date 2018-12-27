@@ -1,5 +1,12 @@
 require('dotenv').config()
 
+
+if (process.env.NODE_ENV !== 'production') {
+  require('./worker.js')
+  console.log('require worker')
+}
+
+
 const express = require('express');
 
 const bodyParser = require('body-parser');
@@ -32,26 +39,6 @@ app.post('/linewebhook', parser, function (req, res) {
   bot.parse(req.body);
   return res.json({});
 });
-
-
-//line login
-// app.use("/auth", login.auth())
-
-// app.use("/callback", login.callback(
-//   (req, res, next, token_response) => {
-//     // Success callback
-//     console.log('token_response')
-//     console.log(token_response)
-//     //應該要回傳登入的react page
-//     res.json(token_response);
-    
-//   },
-//   (req, res, next, error) => {
-//     // Failure callback
-//     res.status(400).json(error);
-//   }
-// ));
-
 
 
 
