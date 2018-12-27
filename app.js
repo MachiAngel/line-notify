@@ -2,7 +2,7 @@ require('dotenv').config()
 
 const express = require('express');
 const session = require("express-session");
-const line_login = require("line-login");
+
 const bodyParser = require('body-parser');
 const path = require('path');
 
@@ -20,14 +20,14 @@ const session_options = {
   saveUninitialized: false
 }
 
-const login = new line_login({
-  channel_id: process.env.LINE_LOGIN_CHANNEL_ID,
-  channel_secret: process.env.LINE_LOGIN_CHANNEL_SECRET,
-  callback_url: process.env.LINE_LOGIN_CALLBACK_URL,
-  scope: "openid profile",
-  prompt: "consent",
-  bot_prompt: "aggressive"
-});
+// const login = new line_login({
+//   channel_id: process.env.LINE_LOGIN_CHANNEL_ID,
+//   channel_secret: process.env.LINE_LOGIN_CHANNEL_SECRET,
+//   callback_url: process.env.LINE_LOGIN_CALLBACK_URL,
+//   scope: "openid profile",
+//   prompt: "consent",
+//   bot_prompt: "aggressive"
+// });
 
 
 // //db 
@@ -59,22 +59,22 @@ app.post('/linewebhook', parser, function (req, res) {
 
 
 //line login
-app.use("/auth", login.auth())
+// app.use("/auth", login.auth())
 
-app.use("/callback", login.callback(
-  (req, res, next, token_response) => {
-    // Success callback
-    console.log('token_response')
-    console.log(token_response)
-    //應該要回傳登入的react page
-    res.json(token_response);
+// app.use("/callback", login.callback(
+//   (req, res, next, token_response) => {
+//     // Success callback
+//     console.log('token_response')
+//     console.log(token_response)
+//     //應該要回傳登入的react page
+//     res.json(token_response);
     
-  },
-  (req, res, next, error) => {
-    // Failure callback
-    res.status(400).json(error);
-  }
-));
+//   },
+//   (req, res, next, error) => {
+//     // Failure callback
+//     res.status(400).json(error);
+//   }
+// ));
 
 
 

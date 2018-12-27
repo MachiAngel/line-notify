@@ -121,3 +121,12 @@ const run = async () => {
 
 
 module.exports = pgdb
+
+
+pgdb.migrate.latest(config)
+  .then(result => {
+    console.log('mirage done')
+  })
+  .catch(e => {
+    console.log(e.message)
+  })
