@@ -96,29 +96,6 @@ const run = async () => {
 //   console.log(e.message)
 // })
 
-// pgdb.schema.createTable('eyny_movie_qq', (table) => {
-//   table.increments()
-  
-//   table.string('title').defaultTo('')
-//   table.string('author', 50).notNullable()
-//   table.string('views')
-//   table.integer()
-//   table.string('article_time')
-//   table.string('article_url')
-//   table.string('pre_image_url')
-//   table.string('article_source')
-//   table.string('movie_quality')
-//   table.timestamps(true, true)
-// }).then(result => {
-//   console.log(result)
-// }).catch(e => {
-//   console.log(e.message)
-// })
-
-
-
-
-
 
 module.exports = pgdb
 

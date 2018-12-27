@@ -1,41 +1,17 @@
 require('dotenv').config()
 
 const express = require('express');
-const session = require("express-session");
 
 const bodyParser = require('body-parser');
-const path = require('path');
-
 const bot = require('./bots/linebot')
-
 
 const subscribeRouter = require('./routers/subscribeRouter.js')
 
 const port = process.env.PORT || 30001
 const app = express();
 
-const session_options = {
-  secret: process.env.LINE_LOGIN_CHANNEL_SECRET,
-  resave: false,
-  saveUninitialized: false
-}
-
-// const login = new line_login({
-//   channel_id: process.env.LINE_LOGIN_CHANNEL_ID,
-//   channel_secret: process.env.LINE_LOGIN_CHANNEL_SECRET,
-//   callback_url: process.env.LINE_LOGIN_CALLBACK_URL,
-//   scope: "openid profile",
-//   prompt: "consent",
-//   bot_prompt: "aggressive"
-// });
 
 
-// //db 
-// const pgdb = require('./db/pgdb.js')
-
-// //script
-// const crawlerScript = new CrawlerScript()
-// const notify = new Notify(pgdb)
 
 
 //驗證
@@ -45,7 +21,7 @@ const parser = bodyParser.json({
   }
 });
 
-app.use(session(session_options));
+
 
 
 //line bot
