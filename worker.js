@@ -1,4 +1,4 @@
-require('dotenv').config()
+
 
 const CrawlerScript = require('./scripts/CrawlerScript')
 const Notify = require('./scripts/NotifyScript')

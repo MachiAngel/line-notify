@@ -10,9 +10,10 @@
   "scripts": {
     "test": "NODE_ENV=test mocha --timeout 200000 test/*.test.js",
     "knex":"./node_modules/.bin/knex",
-    "knexup": "./node_modules/.bin/knex migrate:latest",
+    "knexup": "NODE_ENV=production ./node_modules/.bin/knex migrate:latest",
     "knexdown": "./node_modules/.bin/knex migrate:rollback",
     "staging":"NODE_ENV=staging node app.js",
+    "heroku-postbuild":"NODE_ENV=production ./node_modules/.bin/knex migrate:latest",
     "start": "node app.js"
   },
   "author": "",
