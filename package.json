@@ -12,7 +12,6 @@
     "knex":"./node_modules/.bin/knex",
     "knexup": "NODE_ENV=production ./node_modules/.bin/knex migrate:latest",
     "knexdown": "NODE_ENV=production ./node_modules/.bin/knex migrate:rollback",
-    "staging":"NODE_ENV=staging node app.js",
     "start": "node server.js"
   },
   "author": "",
