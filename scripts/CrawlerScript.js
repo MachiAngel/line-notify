@@ -54,12 +54,13 @@ module.exports = class CrawlerScript extends EventEmitter{
   constructor() {
     super()
     this.intervalTime = '*/30 * * * * *'
-    this.intervalTime2 = '*/50 * * * * *'
-    this.intervalTime3 = '*/20 * * * * *'
+    this.intervalTime2 = '*/2 * * * *'
+    this.intervalTime3 = '*/1 * * * *'
 
     this.eynyJob = undefined
     this.pttJob = undefined
     this.pttHotBoardJob = undefined
+    
   }
     
   startEynyCrawler() {
@@ -139,7 +140,7 @@ module.exports = class CrawlerScript extends EventEmitter{
 
         
         await this.saveArticlesToPgdb({ type: PttCrawler.TYPE_PTT_HOTBOARD_STRING(), results })
-
+        
         // this.emit('notify', { type: PttCrawler.TYPE_PTT_HOTBOARD_STRING(), results })
       } catch (e) {
         console.log('crawler ptt hot board fail:')
@@ -148,6 +149,8 @@ module.exports = class CrawlerScript extends EventEmitter{
 
     })
   }
+
+  
 
 
   async saveArticlesToPgdb({ type, results }) {
@@ -197,15 +200,6 @@ module.exports = class CrawlerScript extends EventEmitter{
         console.log(type)
         
     }
-
-
-    // for (let article of results) {
-    //   try {
-    //     await action(article)
-    //   } catch (e) {
-    //     console.log(e)
-    //   }
-    // }
   }
 }
 

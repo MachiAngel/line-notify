@@ -51,6 +51,7 @@ class PttModel {
 
     try {
       const isHavingArticle = await this.db(PTT_TABLE_STRING).where('article_url', '=', article.article_url).returning('*')
+      
       if (isHavingArticle.length) {
         //更新
         const updateResult = await this.db(PTT_TABLE_STRING)

@@ -21,7 +21,8 @@ module.exports = {
       database: process.env.PG_DATABASE,
       port: process.env.PG_PORT,
       // ssl: true
-    }
+    },
+    pool: { min: 0, max: 2 }
   }
 
 };
