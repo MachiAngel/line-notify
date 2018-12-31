@@ -37,7 +37,7 @@ const pttModel = new PttModel({ db: pgdb })
 module.exports = class Notify  {
 
   constructor() {
-    this.intervalTime = '*/30 * * * * *'
+    this.intervalTime = '*/1 * * * *'
     this.notifyJob_eyny_movie = undefined 
     this.notifyJob_eyny_bt_movie = undefined
     this.notifyJob_eyny_video = undefined
