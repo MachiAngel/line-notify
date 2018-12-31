@@ -22,7 +22,7 @@ module.exports = {
       port: process.env.PG_PORT,
       // ssl: true
     },
-    pool: { min: 0, max: 2 }
+    pool: { min: 2, max: 20 }
   }
 
 };
