@@ -126,7 +126,11 @@ const doAllPttNotify = async () => {
         }
       }
       console.log(`userId:${user_line_id} promise長度 :${promises.length}`)
+      const startTime = Date.now()
       await Promise.all(promises)
+      const endTime = Date.now()
+      console.log(`userId:${user_line_id} ptt notify 耗時: ${(endTime - startTime) / 1000} s`)
+      
     }
     
     
