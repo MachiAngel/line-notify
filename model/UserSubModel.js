@@ -1,10 +1,12 @@
 
+const moment = require('moment')
+
 const { 
   USER_PUSHED_TABLE_STRING,
   SUBSCRIBE_PTT_TABLE_STRING,
   SUBSCRIBE_EYNY_VIDEO_TABLE_STRING,
   SUBSCRIBE_EYNY_BT_MOVIE_TABLE_STRING,
-  SUBSCRIBE_EYNY_MOVIE_TABLE_STRING
+  SUBSCRIBE_EYNY_MOVIE_TABLE_STRING,
 } = require('../constants/tableSchema')
 
 
@@ -159,10 +161,21 @@ class UserSubModel {
 
   }
 
-  
+  async getLastTwoDayPushedArticleByUser(userLineId) {
+    try {
 
+      const articles = await this.db.select('article_url').from(USER_PUSHED_TABLE_STRING)
+        .where('user_line_id', '=', userLineId)
+        .andWhere('created_at', '>', moment().subtract(2, 'days'))
+        .orderBy('created_at')
+      const urls = articles.map(({ article_url }) => article_url) 
+      return urls
+    } catch (e) {
+      console.log(e.message)
+      throw e
+    }
 
-  
+  }  
 }
 
 

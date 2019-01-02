@@ -90,23 +90,46 @@ const doAllPttNotify = async () => {
 
   try {
     //拿出PTT所有的訂閱
-    const userPttSubs = await userSubModel.getSubsByTable(SUBSCRIBE_PTT_TABLE_STRING)
+    const allSubs = await userSubModel.getSubsByTable(SUBSCRIBE_PTT_TABLE_STRING)
+    //整理成每個User 
+    //[ { user_line_id: 'U20c2fb6275968599930d9c307b5fe9d6',
+    //subs: [[Object], [Object], [Object], [Object]] ] 
+    const userSubArray = _.chain(allSubs)
+      .groupBy('user_line_id')
+      .toPairs()
+      .map((currentItem) => {
+        return _.zipObject(['user_line_id', 'subs'], currentItem)
+      })
+      .value()
 
     //拿出爬到的Ptt所有文章
+    //TODO 不管哪個版 都必須限制時間 1000篇 縮成 各種10篇 or 各種一天內
     const pttArticles = await pttModel.getAllArticles()
+    
+    //by每個user去跑
+    for (let subObj of userSubArray) {
+      const promises = []
+      const { user_line_id, subs } = subObj
+      //user_line_id 拿到此推過的id 的所有文章
 
-    const promises = []
-    for (let subscription of userPttSubs) {
+      const pushed_urls = await userSubModel.getLastTwoDayPushedArticleByUser(user_line_id)
+      const pttYetPushedArticles = pttArticles.filter(article => {
+        return !pushed_urls.includes(article.article_url)
+      })
 
-      const filteredArticles = getPttEligibleArticles(subscription, pttArticles)
-     
-      for (let article of filteredArticles) {
-        const promise = handlePttNotifyPromise(subscription, article)
-        promises.push(promise)
+      for (let subscription of subs) {
+        const filteredArticles = getPttEligibleArticles(subscription, pttYetPushedArticles)
+
+        for (let article of filteredArticles) {
+          const promise = handlePttNotifyPromise(subscription, article)
+          promises.push(promise)
+        }
       }
+      console.log(`userId:${user_line_id} promise長度 :${promises.length}`)
+      await Promise.all(promises)
     }
-    console.log(`ptt promise長度 :${promises.length}`)
-    await Promise.all(promises)
+    
+    
   } catch (e) {
     console.log(e)
     throw e 
@@ -114,6 +137,37 @@ const doAllPttNotify = async () => {
 
   
 }
+
+
+// const doAllPttNotify = async () => {
+
+//   try {
+//     //拿出PTT所有的訂閱
+//     const userPttSubs = await userSubModel.getSubsByTable(SUBSCRIBE_PTT_TABLE_STRING)
+
+//     //拿出爬到的Ptt所有文章
+//     //TODO 不管哪個版 都必須限制時間
+//     const pttArticles = await pttModel.getAllArticles()
+
+//     const promises = []
+//     for (let subscription of userPttSubs) {
+
+//       const filteredArticles = getPttEligibleArticles(subscription, pttArticles)
+
+//       for (let article of filteredArticles) {
+//         const promise = handlePttNotifyPromise(subscription, article)
+//         promises.push(promise)
+//       }
+//     }
+//     console.log(`ptt promise長度 :${promises.length}`)
+//     await Promise.all(promises)
+//   } catch (e) {
+//     console.log(e)
+//     throw e
+//   }
+
+
+// }
 
 
 const doAllEynyMovieNotify = async () => {
@@ -173,13 +227,8 @@ const doAllEynyBtMovieNotify = async () => {
 
 
 const handlePttNotifyPromise = async (subscription, article) => {
-  const { sub_type } = subscription
+  
   try {
-
-    //檢查是否該推
-    const shouldPush = await generateShouldPushFunction(sub_type)(subscription, article)
-    if (!shouldPush) { return `${article.title} shouldn't push to${subscription.user_line_id}` }
-
     const line_pushed_result = await pushModel.push(subscription, article)
     //成功line會回傳空物件
     const isResultEmpty = _.isEmpty(line_pushed_result)
@@ -189,9 +238,31 @@ const handlePttNotifyPromise = async (subscription, article) => {
     return `${article.title} push to ${subscription.user_line_id} success`
 
   } catch (e) {
-    return e.message
+    throw e 
   }
 }
+
+
+// const handlePttNotifyPromise = async (subscription, article) => {
+//   const { sub_type } = subscription
+//   try {
+
+//     //檢查是否該推
+//     const shouldPush = await generateShouldPushFunction(sub_type)(subscription, article)
+//     if (!shouldPush) { return `${article.title} shouldn't push to${subscription.user_line_id}` }
+
+//     const line_pushed_result = await pushModel.push(subscription, article)
+//     //成功line會回傳空物件
+//     const isResultEmpty = _.isEmpty(line_pushed_result)
+//     if (!isResultEmpty) { return JSON.stringify(pushedResult) }
+
+//     await userSubModel.savePushedArticleUrlToPGDB(subscription.user_line_id, article)
+//     return `${article.title} push to ${subscription.user_line_id} success`
+
+//   } catch (e) {
+//     return e.message
+//   }
+// }
 
 
 
