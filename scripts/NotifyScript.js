@@ -2,7 +2,7 @@
 const schedule = require('node-schedule')
 const _ = require('lodash') 
 const pgdb = require('../db/pgdb')
-
+const redisdb = require('../db/redis.js')
 const {
   EYNY_SOURCE_VIDEO,
   EYNY_SOURCE_MOIVE,
@@ -27,10 +27,10 @@ const eynyModel = require('../model/EynyModel')
 const pushModel = require('../model/PushModel')
 
 const UserSubModel = require('../model/UserSubModel')
-const userSubModel = new UserSubModel({ db:pgdb })
+const userSubModel = new UserSubModel({ db: pgdb, redis: redisdb })
 
 const PttModel = require('../model/PttModel')
-const pttModel = new PttModel({ db: pgdb })
+const pttModel = new PttModel({ db: pgdb, redis: redisdb })
 
 
 
@@ -89,7 +89,7 @@ module.exports = class Notify  {
 const doAllPttNotify = async () => {
 
   try {
-    //拿出PTT所有的訂閱
+    //拿出PTT使用所有的訂閱
     const allSubs = await userSubModel.getSubsByTable(SUBSCRIBE_PTT_TABLE_STRING)
     //整理成每個User 
     //[ { user_line_id: 'U20c2fb6275968599930d9c307b5fe9d6',
@@ -103,7 +103,7 @@ const doAllPttNotify = async () => {
       .value()
 
     //拿出爬到的Ptt所有文章
-    //TODO 不管哪個版 都必須限制時間 1000篇 縮成 各種10篇 or 各種一天內
+    //不管哪個版 只拿一天內
     const pttArticles = await pttModel.getAllArticles()
     
     //by每個user去跑
@@ -112,14 +112,10 @@ const doAllPttNotify = async () => {
       const { user_line_id, subs } = subObj
       //user_line_id 拿到此推過的id 的所有文章
 
-      const pushed_urls = await userSubModel.getLastTwoDayPushedArticleByUser(user_line_id)
-      const pttYetPushedArticles = pttArticles.filter(article => {
-        return !pushed_urls.includes(article.article_url)
-      })
+      
 
       for (let subscription of subs) {
-        const filteredArticles = getPttEligibleArticles(subscription, pttYetPushedArticles)
-
+        const filteredArticles = getPttEligibleArticles(subscription, pttArticles)
         for (let article of filteredArticles) {
           const promise = handlePttNotifyPromise(subscription, article)
           promises.push(promise)
@@ -233,12 +229,19 @@ const doAllEynyBtMovieNotify = async () => {
 const handlePttNotifyPromise = async (subscription, article) => {
   
   try {
+
+    const isArticlePushed = await userSubModel.isSubscriptionPushed(subscription.user_line_id, article.article_url)
+    if (isArticlePushed) { return }
+
     const line_pushed_result = await pushModel.push(subscription, article)
     //成功line會回傳空物件
     const isResultEmpty = _.isEmpty(line_pushed_result)
-    if (!isResultEmpty) { return JSON.stringify(pushedResult) }
-
-    await userSubModel.savePushedArticleUrlToPGDB(subscription.user_line_id, article)
+    if (!isResultEmpty) { 
+      console.log(JSON.stringify(line_pushed_result))
+      return 
+    }
+    await userSubModel.savePushedUrlToRedis(subscription.user_line_id, article)
+    //await userSubModel.savePushedArticleUrlToPGDB(subscription.user_line_id, article)
     return `${article.title} push to ${subscription.user_line_id} success`
 
   } catch (e) {

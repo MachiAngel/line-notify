@@ -23,8 +23,9 @@ const {
 
 class UserSubModel {
 
-  constructor({ db }) {
+  constructor({ db, redis }) {
     this.db = db
+    this.redis = redis
   }
 
   /** @description Get all user subscriotions
@@ -52,8 +53,8 @@ class UserSubModel {
   
   async getSubsByTable(tableName) {
     try {
-      const tableSubs = await this.db.select('*').from(tableName)
-      
+      const tableSubs = await this.db.select('*')
+        .from(tableName)
       return tableSubs
 
     } catch (e) {
@@ -92,6 +93,26 @@ class UserSubModel {
     }
   }
 
+  /** @description Save pushed url to redis
+  * @param {String} user_line_id.
+  * @param {String} article_url   
+  */
+  async savePushedUrlToRedis(user_line_id, article) {
+    const { article_url } = article
+    try {
+
+      const result = await this.redis
+        .sadd(`${USER_PUSHED_TABLE_STRING}:${user_line_id}`, article_url)
+      return result
+
+    } catch (e) {
+      console.log(e.message)
+      throw e
+    }
+  }
+
+  
+
 
   /** @description Determines articles is pushed or not.
   * @param {String} user_line_id.
@@ -101,15 +122,10 @@ class UserSubModel {
   async isSubscriptionPushed(user_line_id, article_url) {
     try {
 
-      const query = {
-        user_line_id,
-        article_url
-      }
-      const subs = await this.db(USER_PUSHED_TABLE_STRING)
-        .where(query)
-        .select('id')
+      const isPushed = await this.redis
+        .sismember(`${USER_PUSHED_TABLE_STRING}:${user_line_id}`, article_url)
 
-      return subs.length ? true : false 
+      return isPushed 
 
     } catch (e) {
       console.log(e.message)

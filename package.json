@@ -23,6 +23,7 @@
     "dotenv": "^6.0.0",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
+    "ioredis": "^4.3.0",
     "knex": "^0.15.2",
     "line-login": "^1.0.14",
     "linebot": "^1.4.1",

@@ -1,12 +1,13 @@
 
 const { PTT_TABLE_STRING, SUBSCRIBE_PTT_TABLE_STRING , PTT_HOTBOARD_TABLE_STRING } = require('../constants/tableSchema')
-
+const moment = require('moment')
 
 
 class PttModel {
 
-  constructor({ db }) {
+  constructor({ db, redis }) {
     this.db = db
+    this.redis = redis
   }
 
   //拿到所有爬蟲的存入的資料
@@ -15,7 +16,7 @@ class PttModel {
       const articles = await this.db
         .select('*')
         .from(PTT_TABLE_STRING)
-      
+        .where('created_at', '>', moment().subtract(1, 'days'))
       return articles
 
     } catch (error) {
@@ -87,8 +88,7 @@ class PttModel {
     }
 
   }
-
-
+  
    /** @description Remove current ptt hot boards and renew all Ptt hot boards to pgdb from crawler
   * @param {array} hotboards
   * @param {object} Knex
